@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:verito/screens/home_screen.dart';
+import 'package:verito/screens/mobile_auth.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
-      home: const HomePage(title: 'Jack Stauber'),
+      home: const AuthMobile(),
       debugShowCheckedModeBanner: false,
     );
   }
