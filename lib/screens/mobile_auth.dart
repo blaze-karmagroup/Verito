@@ -41,6 +41,8 @@ class _AuthMobileState extends State<AuthMobile> {
   void showOtpDialog() {
     final focusNodes = List.generate(4, (_) => FocusNode());
     final controllers = List.generate(4, (_) => TextEditingController());
+    String errorMessage = '';
+    bool _isVerifying = false;
 
     void disposeControllers() {
       for (var controller in controllers) {
@@ -57,7 +59,6 @@ class _AuthMobileState extends State<AuthMobile> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            String errorMessage = '';
             bool isResending = false;
             int resendTimer = 30;
 
@@ -75,10 +76,16 @@ class _AuthMobileState extends State<AuthMobile> {
 
             void _verifyOtp() {
               final otp = controllers.map((c) => c.text).join();
+              setState(() {
+                _isVerifying = true;
+              });
               print('OTP: $otp');
               if (otp.length != 4) {
                 setState(() {
                   errorMessage = 'Please enter the 4-digit OTP.';
+                  print('otp.length != 4. Please try again.');
+                  _showErrorSnackBar(errorMessage);
+                  _isVerifying = false;
                 });
                 return;
               }
@@ -88,6 +95,7 @@ class _AuthMobileState extends State<AuthMobile> {
                   errorMessage = 'Invalid OTP. Please try again.';
                   print('Invalid OTP. Please try again.');
                   _showErrorSnackBar(errorMessage);
+                  _isVerifying = false;
                 });
               } else {
                 Navigator.of(context).pop();
@@ -233,9 +241,28 @@ class _AuthMobileState extends State<AuthMobile> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Confirm',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Confirm',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      _isVerifying
+                          ? CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                              padding: EdgeInsets.only(left: 14),
+                              constraints: BoxConstraints(
+                                minHeight: 16,
+                                minWidth: 16,
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                    ],
                   ),
                 ),
               ],
@@ -249,6 +276,7 @@ class _AuthMobileState extends State<AuthMobile> {
   void _sendOtp() {
     final String mobileNumber = _mobileController.text;
     print("OTP Sent to $mobileNumber");
+    showOtpDialog();
 
     if (mobileNumber == null ||
         mobileNumber.isEmpty ||
