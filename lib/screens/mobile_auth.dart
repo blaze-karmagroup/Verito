@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:verito/screens/home_screen.dart';
@@ -109,163 +111,162 @@ class _AuthMobileState extends State<AuthMobile> {
               }
             }
 
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              backgroundColor: Color(0xFFF8F0E3),
-              title: Center(
-                child: Text(
-                  'Enter OTP',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal.shade800,
-                  ),
+            return PopScope(
+              canPop: false,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  // mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      'A 4-digit code has been sent to your number.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(4, (index) {
-                        return SizedBox(
-                          width: 48,
-                          child: TextFormField(
-                            controller: controllers[index],
-                            focusNode: focusNodes[index],
-                            onChanged: (value) => _onOtpChanged(value, index),
-                            textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            maxLength: 1,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                            decoration: InputDecoration(
-                              counterText: '',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(
-                                  color: Colors.teal.shade700,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                    // Padding(
-                    //   padding: const EdgeInsets.only(top: 12),
-                    //   child: (errorMessage.isNotEmpty)
-                    //       ? Text(
-                    //           errorMessage,
-                    //           textAlign: TextAlign.center,
-                    //           style: TextStyle(
-                    //             color: Colors.red.shade700,
-                    //             fontSize: 12,
-                    //           ),
-                    //         )
-                    //       : const SizedBox.shrink(),
-                    // ),
-                    if (errorMessage.isNotEmpty) ...[
-                      const SizedBox(height: 12),
+                contentPadding: EdgeInsets.zero,
+                elevation: 0,
+                backgroundColor: Color(0xFFF8F0E3),
+                content: Container(
+                  padding: EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       Text(
-                        errorMessage,
+                        'Enter OTP',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.red.shade700,
-                          fontSize: 12,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade800,
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Didn't receive code? ",
-                          style: TextStyle(color: Colors.grey.shade700),
+                      const SizedBox(height: 8),
+
+                      Text(
+                        'A 4-digit code has been sent to your number.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 14,
                         ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          onPressed: () {
-                            // TODO: Add resend logic
-                            print("Resend OTP tapped");
-                          },
-                          child: Text(
-                            "Resend OTP",
-                            style: TextStyle(
-                              color: Colors.teal.shade700,
-                              fontWeight: FontWeight.bold,
+                      ),
+                      const SizedBox(height: 20),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(4, (index) {
+                          return SizedBox(
+                            width: 52,
+                            child: TextFormField(
+                              controller: controllers[index],
+                              focusNode: focusNodes[index],
+                              onChanged: (value) => _onOtpChanged(value, index),
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              maxLength: 1,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              decoration: InputDecoration(
+                                counterText: '',
+                                filled: true,
+                                fillColor: Colors.white,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(
+                                    color: Colors.teal.shade700,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
                             ),
+                          );
+                        }),
+                      ),
+
+                      if (errorMessage.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          errorMessage,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-              actionsAlignment: MainAxisAlignment.center,
-              actionsPadding: EdgeInsets.fromLTRB(24, 0, 24, 24),
-              actions: [
-                ElevatedButton(
-                  onPressed: _verifyOtp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal.shade700,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Confirm',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      _isVerifying
-                          ? CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                              padding: EdgeInsets.only(left: 14),
-                              constraints: BoxConstraints(
-                                minHeight: 16,
-                                minWidth: 16,
+                      const SizedBox(height: 12),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Didn't receive code? ",
+                            style: TextStyle(color: Colors.grey.shade700),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              // TODO: Add resend logic
+                              print("Resend OTP tapped");
+                            },
+                            child: Text(
+                              "Resend OTP",
+                              style: TextStyle(
+                                color: Colors.teal.shade700,
+                                fontWeight: FontWeight.bold,
                               ),
-                            )
-                          : SizedBox.shrink(),
+                            ),
+                          ),
+                        ],
+                      ),
+                          const SizedBox(height: 16),
+
+                          ElevatedButton(
+                            onPressed: _verifyOtp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade700,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 8,
+                              shadowColor: Colors.teal.withOpacity(0.5),
+                            ),
+                            child: _isVerifying
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Confirm',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                          ),
                     ],
                   ),
                 ),
-              ],
+              ),
             );
           },
         );
@@ -298,85 +299,133 @@ class _AuthMobileState extends State<AuthMobile> {
         height: double.infinity,
         width: double.infinity,
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.teal.shade100, Color(0xFFF8F0E3)],
+            colors: [Colors.teal.shade300, Color(0xFFF8F0E3)],
+            stops: [0.4, 1.0],
           ),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // Icon(Icons.fingerprint, size: 60, color: Colors.teal.shade700),
-              Image.asset('assets/images/karma_logo.png'),
-
-              // const SizedBox(height: 20),
-              const Text(
-                'Welcome to Karma Verito',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF023C3C),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(
+                left: 24.0,
+                right: 24.0,
+                top: 40.0,
+                bottom: 72.0,
+              ),
+              decoration: BoxDecoration(
+                color: Color(0xFFF8F0E3),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Enter your mobile number to continue',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(
+                    height: 60,
+                    child: Image.asset(
+                      'assets/images/karma_logo.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 24.0),
 
-              TextFormField(
-                controller: _mobileController,
-                keyboardType: TextInputType.phone,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
+                  const Text(
+                    'Welcome to Verito',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF035C5C),
+                    ),
+                  ),
+                  const SizedBox(height: 2.0),
+
+                  Text(
+                    'Enter your mobile number to continue',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(height: 32),
+
+                  TextFormField(
+                    controller: _mobileController,
+                    keyboardType: TextInputType.phone,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.0,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    // decoration: InputDecoration(
+                    //   hintText: 'e.g. 9876543210',
+                    //   hintStyle: TextStyle(color: Colors.grey.shade500),
+                    //   filled: true,
+                    //   fillColor: Colors.white,
+                    //   border: OutlineInputBorder(
+                    //     borderRadius: BorderRadius.circular(12),
+                    //     borderSide: BorderSide.none,
+                    //   ),
+                    //   contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    // ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: 'e.g. 9876543210',
+                      hintStyle: TextStyle(color: Colors.grey.shade500),
+                      filled: true,
+                      fillColor: Colors.white,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: Colors.teal.shade700,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: _sendOtp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 5,
+                      shadowColor: Colors.teal.shade200,
+                    ),
+                    child: const Text(
+                      'Send OTP',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ],
-                decoration: InputDecoration(
-                  hintText: 'e.g. 9876543210',
-                  hintStyle: TextStyle(color: Colors.grey.shade500),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                ),
               ),
-              const SizedBox(height: 24),
-
-              ElevatedButton(
-                onPressed: _sendOtp,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal.shade700,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 5,
-                  shadowColor: Colors.teal.shade200,
-                ),
-                child: const Text(
-                  'Send OTP',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

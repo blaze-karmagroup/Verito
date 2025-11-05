@@ -12,12 +12,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String _statusMessage = 'Checking Location...';
+  bool _isCheckInEnabled = true;
+
   @override
   Widget build(BuildContext context) {
     final DateTime now = DateTime.now();
     final String formattedDate = DateFormat('EEEE - d MMMM yyyy').format(now);
     final String formattedTime = DateFormat('h:mm a').format(now);
-    String _statusMessage = 'Checking Location...';
     List<Geofence> geoFences = [
       Geofence(
         id: "1",
@@ -57,47 +59,6 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      // appBar: AppBar(
-      //   toolbarHeight: 140,
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   title: Row(
-      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //     children: [
-      //       Column(
-      //         crossAxisAlignment: CrossAxisAlignment.start,
-      //         children: [
-      //           Text(
-      //             "Hello ${widget.title}!",
-      //             style: const TextStyle(
-      //               fontWeight: FontWeight.bold,
-      //               fontSize: 20,
-      //               color: Color(0xE8000000),
-      //             ),
-      //           ),
-      //           SizedBox(height: 2),
-      //           const Text(
-      //             "Good Day! Let's check your attendance",
-      //             style: TextStyle(fontSize: 12),
-      //           ),
-      //         ],
-      //       ),
-      //
-      //       CircleAvatar(
-      //         radius: 20,
-      //         backgroundColor: Colors.teal.shade800,
-      //         child: const Text(
-      //           'B',
-      //           style: TextStyle(
-      //             fontSize: 14,
-      //             color: Colors.white,
-      //             fontWeight: FontWeight.bold,
-      //           ),
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
       extendBodyBehindAppBar: true,
       body: Container(
         height: double.infinity,
@@ -106,7 +67,7 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.teal.shade100, Color(0xFFF8F0E3)],
+            colors: [Colors.teal.shade200, Color(0xFFF8F0E3)],
           ),
         ),
         child: SingleChildScrollView(
@@ -114,9 +75,9 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              SizedBox(height: 80),
+              SizedBox(height: 72),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
+                margin: EdgeInsets.only(left: 16, right: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -133,27 +94,26 @@ class _HomePageState extends State<HomePage> {
                         ),
                         SizedBox(height: 1),
                         const Text(
-                          "Good Day! Let's check your attendance",
+                          "Ready for a productive day?",
                           style: TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.teal.shade800,
-                      child: const Text(
-                        'B',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _statusMessage = "Enabled button...";
+                          _isCheckInEnabled = true;
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      color: Colors.black.withOpacity(0.7),
+                      tooltip: 'Refresh',
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 32),
               Text(
                 formattedTime,
                 style: const TextStyle(
@@ -164,23 +124,24 @@ class _HomePageState extends State<HomePage> {
               ),
               Text(
                 formattedDate,
-                style: const TextStyle(
-                  fontSize: 14,
+                style: TextStyle(
+                  fontSize: 16,
                   letterSpacing: 1,
                   fontWeight: FontWeight.w300,
-                  color: Colors.grey,
+                  color: Colors.black.withOpacity(0.6),
                 ),
               ),
               Text(
                 "You're at: \$Location",
-                style: const TextStyle(
-                  fontSize: 14,
+                style: TextStyle(
+                  fontSize: 16,
                   letterSpacing: 1,
                   fontWeight: FontWeight.w300,
-                  color: Colors.grey,
+                  color: Colors.black.withOpacity(0.6),
                 ),
               ),
               SizedBox(height: 24),
+
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -226,8 +187,8 @@ class _HomePageState extends State<HomePage> {
 
               SizedBox(height: 32),
               Container(
-                width: 210,
-                height: 210,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -244,41 +205,53 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.touch_app_outlined,
-                      color: Colors.teal.shade800,
-                      size: 48,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      "Check In",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.normal,
-                        color: Colors.black54,
+                child: ElevatedButton(
+                  onPressed: _isCheckInEnabled
+                      ? () {
+                          setState(() {
+                            _statusMessage = "Checked in for today!";
+                            _isCheckInEnabled = false;
+                          });
+                        }
+                      : null,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.touch_app_outlined,
+                        color: Colors.teal.shade800,
+                        size: 48,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+
+                      Text(
+                        "Check In",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: 32),
 
-              const Text(
-                "Available Locations:",
+              Text(
+                "Locations assigned to you:",
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600, // Semi-bold is a modern choice
+                  fontWeight: FontWeight.w600,
                   color: Colors.black54,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+
               geoFences.isEmpty
                   ? const Center(
                       child: Text(
-                        "No geofences found.",
+                        "Available locations will be shown here...",
                         style: TextStyle(
                           color: Colors.grey,
                           fontStyle: FontStyle.italic,
@@ -287,37 +260,53 @@ class _HomePageState extends State<HomePage> {
                     )
                   : Container(
                       height: 200,
+                      width: double.infinity,
                       margin: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.05),
+                            offset: const Offset(0, 4),
+                            blurRadius: 10,
+                          ),
+                        ],
                       ),
                       child: ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: 2.0),
                         shrinkWrap: true,
                         itemCount: geoFences.length,
                         itemBuilder: (BuildContext context, int index) {
                           final fence = geoFences[index];
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            dense: true,
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(102),
-                              child: Image.network(
-                                'https://lh3.googleusercontent.com/gps-cs-s/AC9h4nq36RWSTau36lw-ti2OaGGUQlfMyANebNnOJfzxFvXlUjgc5kuDwr1bOiNy2VY-wGpq4y0HI7ZB38eVaFigzbjfwGLOQObbgtCZf0w-Nvk4WVLlzWUYs2yOvFk_4LQFHoaQhqUZBA=s680-w680-h510-rw',
-                                fit: BoxFit.cover,
-                                width: 50,
-                                height: 50,
-                              ),
-                            ),
-                            title: Text(
-                              fence.name,
-                              style: TextStyle(
-                                color: Colors.teal.shade900,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fence.name,
+                                  style: TextStyle(
+                                    color: Colors.teal.shade900.withOpacity(0.85),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  " - Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
+                                  style: TextStyle(
+                                    color: Colors.teal.shade900.withOpacity(0.65),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                             // subtitle: Text(
                             //   "Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
@@ -330,9 +319,9 @@ class _HomePageState extends State<HomePage> {
                         },
                         separatorBuilder: (BuildContext context, int index) {
                           return Divider(
-                            color: Colors.teal.withOpacity(0.12),
-                            indent: 16,
-                            endIndent: 16,
+                            color: Colors.teal.withOpacity(0.2),
+                            // indent: 16,
+                            // endIndent: 16,
                           );
                         },
                       ),
