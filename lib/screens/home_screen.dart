@@ -12,12 +12,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String _statusMessage = 'Checking Location...';
+  bool _isCheckInEnabled = true;
+
   @override
   Widget build(BuildContext context) {
     final DateTime now = DateTime.now();
     final String formattedDate = DateFormat('EEEE - d MMMM yyyy').format(now);
     final String formattedTime = DateFormat('h:mm a').format(now);
-    String _statusMessage = 'Checking Location...';
     List<Geofence> geoFences = [
       Geofence(
         id: "1",
@@ -57,47 +59,6 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      // appBar: AppBar(
-      //   toolbarHeight: 140,
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   title: Row(
-      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //     children: [
-      //       Column(
-      //         crossAxisAlignment: CrossAxisAlignment.start,
-      //         children: [
-      //           Text(
-      //             "Hello ${widget.title}!",
-      //             style: const TextStyle(
-      //               fontWeight: FontWeight.bold,
-      //               fontSize: 20,
-      //               color: Color(0xE8000000),
-      //             ),
-      //           ),
-      //           SizedBox(height: 2),
-      //           const Text(
-      //             "Good Day! Let's check your attendance",
-      //             style: TextStyle(fontSize: 12),
-      //           ),
-      //         ],
-      //       ),
-      //
-      //       CircleAvatar(
-      //         radius: 20,
-      //         backgroundColor: Colors.teal.shade800,
-      //         child: const Text(
-      //           'B',
-      //           style: TextStyle(
-      //             fontSize: 14,
-      //             color: Colors.white,
-      //             fontWeight: FontWeight.bold,
-      //           ),
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
       extendBodyBehindAppBar: true,
       body: Container(
         height: double.infinity,
@@ -106,7 +67,10 @@ class _HomePageState extends State<HomePage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.teal.shade100, Color(0xFFF8F0E3)],
+            colors: [
+              Color(0xFF0D052B), // Very dark, deep space purple
+              Color(0xFF231A54),
+            ],
           ),
         ),
         child: SingleChildScrollView(
@@ -116,7 +80,7 @@ class _HomePageState extends State<HomePage> {
             children: <Widget>[
               SizedBox(height: 80),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
+                margin: EdgeInsets.only(left: 16, right: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -125,62 +89,78 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Text(
                           "Hello ${widget.title}!",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Color(0xE8000000),
+                            color: Colors.white.withOpacity(0.95),
                           ),
                         ),
                         SizedBox(height: 1),
-                        const Text(
-                          "Good Day! Let's check your attendance",
-                          style: TextStyle(fontSize: 12),
+                        Text(
+                          "Ready for a productive day?",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
                         ),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.teal.shade800,
-                      child: const Text(
-                        'B',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _statusMessage = "Enabled button...";
+                          _isCheckInEnabled = true;
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      color: Colors.white.withOpacity(0.9),
+                      tooltip: 'Refresh',
                     ),
+                    // CircleAvatar(
+                    //   radius: 20,
+                    //   backgroundColor: const Color(0xFFE91E63),
+                    //   child: const Text(
+                    //     'B',
+                    //     style: TextStyle(
+                    //       fontSize: 16,
+                    //       color: Colors.white,
+                    //       fontWeight: FontWeight.bold,
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 32),
               Text(
                 formattedTime,
                 style: const TextStyle(
                   fontSize: 44,
+                  color: Colors.white,
                   letterSpacing: 1,
                   fontWeight: FontWeight.w300,
                 ),
               ),
               Text(
                 formattedDate,
-                style: const TextStyle(
-                  fontSize: 14,
-                  letterSpacing: 1,
+                style: TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w300,
-                  color: Colors.grey,
+                  letterSpacing: 1.2,
+                  color: Colors.white.withOpacity(0.8),
                 ),
               ),
               Text(
                 "You're at: \$Location",
-                style: const TextStyle(
-                  fontSize: 14,
-                  letterSpacing: 1,
+                style: TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w300,
-                  color: Colors.grey,
+                  letterSpacing: 1.2,
+                  color: Colors.white.withOpacity(0.8),
                 ),
               ),
               SizedBox(height: 24),
+
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -193,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: const BorderRadius.all(Radius.circular(12)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.grey.withOpacity(0.05),
                       offset: const Offset(0, 4),
                       blurRadius: 10,
                     ),
@@ -205,7 +185,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Icon(
                       Icons.location_on_outlined,
-                      color: Colors.teal.shade700,
+                      color: Color(0xFF0D052B).withOpacity(0.8),
                       size: 22,
                     ),
                     const SizedBox(width: 12),
@@ -216,7 +196,7 @@ class _HomePageState extends State<HomePage> {
                           fontSize: 14,
                           height: 1.5,
                           fontWeight: FontWeight.w400,
-                          color: Colors.teal.shade900.withOpacity(0.8),
+                          color: Color(0xFF0D052B).withOpacity(0.8),
                         ),
                       ),
                     ),
@@ -226,59 +206,95 @@ class _HomePageState extends State<HomePage> {
 
               SizedBox(height: 32),
               Container(
-                width: 210,
-                height: 210,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    center: Alignment.topLeft,
-                    radius: 2,
-                    colors: [Colors.grey.shade300, Colors.white70],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFD6D6D6),
-                      offset: const Offset(0, 4),
-                      blurRadius: 25,
-                      spreadRadius: 1,
-                    ),
-                  ],
+                  boxShadow: _isCheckInEnabled
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFE91E63).withOpacity(0.4),
+                            blurRadius: 25,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.4),
+                            offset: const Offset(5, 5),
+                            blurRadius: 15,
+                            spreadRadius: 1,
+                          ),
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.05),
+                            offset: const Offset(-5, -5),
+                            blurRadius: 15,
+                            spreadRadius: 1,
+                          ),
+                        ],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.touch_app_outlined,
-                      color: Colors.teal.shade800,
-                      size: 48,
+                child: ElevatedButton(
+                  onPressed: _isCheckInEnabled
+                      ? () {
+                          setState(() {
+                            _statusMessage = "Checking In...";
+                            _isCheckInEnabled = false;
+                          });
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: EdgeInsets.zero,
+                    backgroundColor: _isCheckInEnabled
+                        ? const Color(0xFFE91E63)
+                        : Colors.grey.shade800.withOpacity(0.5),
+                    disabledBackgroundColor: Colors.grey.shade800.withOpacity(
+                      0.5,
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      "Check In",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.normal,
-                        color: Colors.black54,
+                    elevation: 0,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.touch_app_outlined,
+                        color: _isCheckInEnabled
+                            ? Colors.white
+                            : Colors.grey.shade500,
+                        size: 48,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Text(
+                        "Check In",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          // Change text color based on state
+                          color: _isCheckInEnabled
+                              ? Colors.white.withOpacity(0.9)
+                              : Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: 32),
 
-              const Text(
-                "Available Locations:",
+              Text(
+                "Locations assigned to you:",
                 style: TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600, // Semi-bold is a modern choice
-                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.8),
                 ),
               ),
               const SizedBox(height: 12),
+
               geoFences.isEmpty
                   ? const Center(
                       child: Text(
-                        "No geofences found.",
+                        "Available locations will be shown here...",
                         style: TextStyle(
                           color: Colors.grey,
                           fontStyle: FontStyle.italic,
@@ -287,37 +303,55 @@ class _HomePageState extends State<HomePage> {
                     )
                   : Container(
                       height: 200,
+                      width: double.infinity,
                       margin: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.white.withOpacity(0.65),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(12),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.05),
+                            offset: const Offset(0, 4),
+                            blurRadius: 10,
+                          ),
+                        ],
                       ),
                       child: ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(vertical: 2.0),
                         shrinkWrap: true,
                         itemCount: geoFences.length,
                         itemBuilder: (BuildContext context, int index) {
                           final fence = geoFences[index];
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
                             ),
-                            dense: true,
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(102),
-                              child: Image.network(
-                                'https://lh3.googleusercontent.com/gps-cs-s/AC9h4nq36RWSTau36lw-ti2OaGGUQlfMyANebNnOJfzxFvXlUjgc5kuDwr1bOiNy2VY-wGpq4y0HI7ZB38eVaFigzbjfwGLOQObbgtCZf0w-Nvk4WVLlzWUYs2yOvFk_4LQFHoaQhqUZBA=s680-w680-h510-rw',
-                                fit: BoxFit.cover,
-                                width: 50,
-                                height: 50,
-                              ),
-                            ),
-                            title: Text(
-                              fence.name,
-                              style: TextStyle(
-                                color: Colors.teal.shade900,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fence.name,
+                                  style: TextStyle(
+                                    color: Color(0xFF0D052B).withOpacity(0.85),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  " - Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
+                                  style: TextStyle(
+                                    color: Color(0xFF0D052B).withOpacity(0.65),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                             // subtitle: Text(
                             //   "Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
@@ -330,9 +364,9 @@ class _HomePageState extends State<HomePage> {
                         },
                         separatorBuilder: (BuildContext context, int index) {
                           return Divider(
-                            color: Colors.teal.withOpacity(0.12),
-                            indent: 16,
-                            endIndent: 16,
+                            color: const Color(0xFF0D052B).withOpacity(0.2),
+                            // indent: 16,
+                            // endIndent: 16,
                           );
                         },
                       ),
