@@ -83,6 +83,16 @@ class _AuthMobileState extends State<AuthMobile> {
               });
               print('OTP: $otp');
               if (otp.length != 4) {
+                // TODO remove this part - skip OTP
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  this.context,
+                  MaterialPageRoute(
+                    builder: (context) => HomePage(title: "Auth"),
+                  ),
+                );
+                _showSuccessSnackBar('OTP Skipped Successfully!');
+
                 setState(() {
                   errorMessage = 'Please enter the 4-digit OTP.';
                   print('otp.length != 4. Please try again.');

@@ -11,6 +11,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
+  http: ^1.5.0
+  firebase_core: ^4.1.0
+  firebase_auth: ^6.0.2
+
   cupertino_icons: ^1.0.8
   intl: ^0.20.2
 

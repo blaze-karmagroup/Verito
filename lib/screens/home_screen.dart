@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:verito/models/geofence.dart';
 
@@ -12,51 +17,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Position? _currentPosition;
+  List<Geofence> geoFences = [];
   String _statusMessage = 'Checking Location...';
   bool _isCheckInEnabled = true;
+  Geofence? _currentGeofence;
+
+  @override
+  void initState(){
+    super.initState();
+    _initLocationFlow();
+  }
+
+  bool isInsideGeofence(Position userPosition, Geofence geofence) {
+    double distanceBetween = Geolocator.distanceBetween(
+      userPosition.latitude,
+      userPosition.longitude,
+      geofence.latitude,
+      geofence.longitude,
+    );
+
+    return distanceBetween <= geofence.radius;
+  }
 
   @override
   Widget build(BuildContext context) {
     final DateTime now = DateTime.now();
     final String formattedDate = DateFormat('EEEE - d MMMM yyyy').format(now);
     final String formattedTime = DateFormat('h:mm a').format(now);
-    List<Geofence> geoFences = [
-      Geofence(
-        id: "1",
-        name: "Car Parking",
-        latitude: 15.175448,
-        longitude: 73.949296,
-        radius: 10,
-      ),
-      Geofence(
-        id: "2",
-        name: "Slide Pool",
-        latitude: 15.175858,
-        longitude: 73.948252,
-        radius: 10,
-      ),
-      Geofence(
-        id: "3",
-        name: "Splash Bar",
-        latitude: 15.175573,
-        longitude: 73.948259,
-        radius: 10,
-      ),
-      Geofence(
-        id: "4",
-        name: "Restaurant",
-        latitude: 15.175269,
-        longitude: 73.948058,
-        radius: 10,
-      ),
-      Geofence(
-        id: "5",
-        name: "Time Office",
-        latitude: 15.175058,
-        longitude: 73.947809,
-        radius: 10,
-      ),
-    ];
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -101,6 +89,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     IconButton(
                       onPressed: () {
+                        _initLocationFlow();
                         setState(() {
                           _statusMessage = "Enabled button...";
                           _isCheckInEnabled = true;
@@ -288,33 +277,30 @@ class _HomePageState extends State<HomePage> {
                               horizontal: 4,
                               vertical: 4,
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisAlignment: MainAxisAlignment.start,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   fence.name,
                                   style: TextStyle(
-                                    color: Colors.teal.shade900.withOpacity(0.85),
+                                    color: Colors.teal.shade900.withOpacity(
+                                      0.85,
+                                    ),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 Text(
-                                  " - Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
+                                  "Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
                                   style: TextStyle(
-                                    color: Colors.teal.shade900.withOpacity(0.65),
+                                    color: Colors.teal.shade900.withOpacity(
+                                      0.65,
+                                    ),
                                     fontSize: 12,
                                   ),
                                 ),
                               ],
                             ),
-                            // subtitle: Text(
-                            //   "Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
-                            //   style: TextStyle(
-                            //     color: Colors.black.withOpacity(0.6),
-                            //     fontSize: 12,
-                            //   ),
-                            // ),
                           );
                         },
                         separatorBuilder: (BuildContext context, int index) {
@@ -332,5 +318,200 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  void _checkUserGeofences(Position userPosition, List<Geofence> geofences) {
+    if(geofences.isEmpty){
+      setState(() {
+        _statusMessage = "No geofences assigned to you.";
+      });
+      return;
+    }
+
+    Geofence? foundFence;
+
+    for (var fence in geofences) {
+      if (isInsideGeofence(userPosition, fence)) {
+        foundFence = fence;
+        break;
+      }
+    }
+
+    setState(() {
+      _currentGeofence = foundFence;
+      if(foundFence != null){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "You're in ${foundFence.name} \n Lat: ${foundFence.latitude} \n Lon: ${foundFence.longitude}",
+            ),
+          ),
+        );
+        _statusMessage =        "You're in ${foundFence.name}";
+      } else {
+        _statusMessage = "You are not in any location assigned to you.";
+        _currentGeofence = null;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("You're not in any GeoFence")));
+      }
+    });
+  }
+
+  Future<void> _initLocationFlow() async {
+    bool ready = await checkLocationAndPermission(context);
+    setState(() {
+      _statusMessage = "Initializing Location Flow...";
+    });
+    if (!ready) {
+      setState(() {
+        _statusMessage = "Location check failed. (Location/GPS not enabled)";
+      });
+      return;
+    }
+
+    try{
+      LocationSettings settings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      );
+
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: settings,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      setState(() {
+        _currentPosition = position;
+        _statusMessage = "Location acquired...";
+      });
+
+      final List<Geofence>? fetchedGeofences = await _fetchAssignedGeofences();
+
+      if(fetchedGeofences != null){
+        _checkUserGeofences(position, fetchedGeofences);
+      } else {
+        setState(() {
+          _statusMessage = "Could not load geofence data from server.";
+        });
+      }
+
+      print("Current Position: ${position.latitude}, ${position.longitude}");
+    } on TimeoutException {
+      setState(() {
+        _statusMessage = 'Error: Location fetch timed out';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = 'Error fetching location: ${e.toString()}';
+      });
+    }
+  }
+
+  Future<List<Geofence>?> _fetchAssignedGeofences() async {
+    try {
+      final url = Uri.parse('http://192.168.10.128:8080/geofences');
+      print('Calling Api from: $url');
+
+      final response = await http.get(url).timeout(Duration(seconds: 10));
+
+      if(response.statusCode == 200){
+        final List<dynamic> geofenceData = jsonDecode(response.body);
+
+        final List<Geofence> fetchedGeofences = geofenceData
+            .map((item) => Geofence.fromJson(item))
+            .toList();
+
+        setState(() {
+          geoFences = fetchedGeofences;
+        });
+
+        print("Fetched geofences: $fetchedGeofences");
+        return fetchedGeofences;
+      }
+    } catch (e){
+      print("_fetchAssignedGeofences Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error fetching geofences.")),
+      );
+    }
+    return null;
+  }
+
+  Future<bool> checkLocationAndPermission(BuildContext context) async {
+    bool locationEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!locationEnabled) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Enable Location"),
+          content: const Text(
+            'Location is turned off. Please enable GPS to continue.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await Geolocator.openLocationSettings();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    LocationPermission locationPermission = await Geolocator.checkPermission();
+    if (locationPermission == LocationPermission.denied) {
+      locationPermission = await Geolocator.requestPermission();
+      if (locationPermission == LocationPermission.denied) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Location Permission Needed"),
+            content: const Text(
+              'This app needs location permission to work. Please allow it.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Retry"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Geolocator.openAppSettings();
+                },
+                child: const Text("Open App Settings"),
+              ),
+            ],
+          ),
+        );
+        return false;
+      }
+    }
+
+    if (locationPermission == LocationPermission.deniedForever) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Location Permanently Denied"),
+          content: const Text(
+            'This app needs location permission to work. Please allow it from settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Geolocator.openAppSettings();
+              },
+              child: const Text("Retry"),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 }
