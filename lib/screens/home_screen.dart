@@ -8,9 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:verito/models/geofence.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, required this.title});
-
-  final String title;
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -73,7 +71,7 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hello ${widget.title}!",
+                          "Hello User!",
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
@@ -232,7 +230,7 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black54,
+                  color: Colors.teal.shade800,
                 ),
               ),
               const SizedBox(height: 8),
@@ -283,6 +281,8 @@ class _HomePageState extends State<HomePage> {
                               children: [
                                 Text(
                                   fence.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: Colors.teal.shade900.withOpacity(
                                       0.85,
@@ -292,6 +292,8 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 Text(
                                   "Lat: ${fence.latitude.toStringAsFixed(4)}, Lon: ${fence.longitude.toStringAsFixed(4)}",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: Colors.teal.shade900.withOpacity(
                                       0.65,

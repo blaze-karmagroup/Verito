@@ -1,7 +1,9 @@
-import 'dart:ui';
+import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:verito/screens/home_screen.dart';
 
 class AuthMobile extends StatefulWidget {
@@ -13,34 +15,76 @@ class AuthMobile extends StatefulWidget {
 
 class _AuthMobileState extends State<AuthMobile> {
   final TextEditingController _mobileController = TextEditingController();
+  Map<String, dynamic> _fetchedUser = {};
+  String _fetchedUserName = '';
+  bool _isLoading = false;
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
+  void _verifyNumberAndSendOtp() async {
+    final String mobileNumber = _mobileController.text;
+    print("OTP Sent to $mobileNumber");
+
+    if (mobileNumber.isEmpty || mobileNumber.length != 10) {
+      _showErrorSnackBar('Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    print("Checking for $mobileNumber through API...");
+    setState(() => _isLoading = true);
+
+    try {
+      final fetchUserUrl = Uri.parse(
+        'http://192.168.10.128:8080/employee?mobile=+$mobileNumber',
+      );
+
+      print('Calling: $fetchUserUrl');
+
+      final response = await http
+          .get(fetchUserUrl)
+          .timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> employee = jsonDecode(response.body);
+        print("Fetched employee: $employee");
+        setState(() {
+          _fetchedUser = employee;
+          _fetchedUserName = employee['Employee_Name'].toString();
+        });
+
+        final vasudevResponse = await http.post(
+          Uri.parse('http://192.168.10.128:8080/send-otp'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'phoneNumber': mobileNumber}),
+        );
+
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        if (vasudevResponse.statusCode == 200) {
+          _showSuccessSnackBar('OTP sent successfully.');
+          _showOtpDialog(phoneNumber: mobileNumber);
+        } else {
+          _showErrorSnackBar('Error sending OTP.');
+          setState(() => _isLoading = false);
+        }
+      } else {
+        setState(() => _isLoading = false);
+        print("Error fetching user: ${response.statusCode}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("This mobile number is not registered."),
+          ),
+        );
+      }
+    } catch (e) {
+      print('_verifyNumberAndSendOtp error: $e');
+      _showErrorSnackBar('Error fetching user data');
+      setState(() => _isLoading = false);
+    }
   }
 
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  void showOtpDialog() {
+  void _showOtpDialog({required String phoneNumber}) {
     final focusNodes = List.generate(4, (_) => FocusNode());
     final controllers = List.generate(4, (_) => TextEditingController());
     String errorMessage = '';
@@ -56,16 +100,15 @@ class _AuthMobileState extends State<AuthMobile> {
     }
 
     showDialog(
-      context: this.context,
+      context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            bool isResending = false;
-            int resendTimer = 30;
+          builder: (context, setDialogState) {
+            bool isDialogLoading = false;
 
             void _onOtpChanged(String value, int index) {
-              setState(() {
+              setDialogState(() {
                 errorMessage = '';
               });
               if (value.isNotEmpty && index < 3) {
@@ -76,49 +119,59 @@ class _AuthMobileState extends State<AuthMobile> {
               }
             }
 
-            void _verifyOtp() {
+            Future<void> _verifyOtp() async {
               final otp = controllers.map((c) => c.text).join();
-              setState(() {
-                _isVerifying = true;
-              });
               print('OTP: $otp');
-              if (otp.length != 4) {
-                // TODO remove this part - skip OTP
-                Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  this.context,
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(title: "Auth"),
-                  ),
-                );
-                _showSuccessSnackBar('OTP Skipped Successfully!');
 
-                setState(() {
-                  errorMessage = 'Please enter the 4-digit OTP.';
-                  print('otp.length != 4. Please try again.');
-                  _showErrorSnackBar(errorMessage);
-                  _isVerifying = false;
-                });
+              if (otp.length != 4 || otp.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Invalid OTP entered.')),
+                );
+                setDialogState(() => errorMessage = 'Check OTP');
+                print('otp.length != 4. Please try again.');
                 return;
               }
-              // --- TODO: Replace with your actual OTP verification logic ---
-              if (otp != "1234") {
-                setState(() {
-                  errorMessage = 'Invalid OTP. Please try again.';
-                  print('Invalid OTP. Please try again.');
-                  _showErrorSnackBar(errorMessage);
-                  _isVerifying = false;
-                });
-              } else {
-                Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  this.context,
-                  MaterialPageRoute(
-                    builder: (context) => HomePage(title: "Auth"),
-                  ),
+
+              setDialogState(() => _isVerifying = true);
+
+              print('Authenticating with mobile and otp credentials');
+
+              try {
+                final vasudevResponse = await http.post(
+                  Uri.parse('http://192.168.10.128:8080/verify-otp'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({'phoneNumber': phoneNumber, 'otp': otp}),
                 );
-                _showSuccessSnackBar('OTP Verified Successfully!');
+
+                if (!mounted) return;
+
+                if (vasudevResponse.statusCode == 200) {
+                  final data = jsonDecode(vasudevResponse.body);
+                  final customToken = data['token'];
+                  await FirebaseAuth.instance.signInWithCustomToken(
+                    customToken,
+                  );
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Authentication successful.')),
+                  );
+
+                  setDialogState(() => _isVerifying = false);
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomePage()),
+                  );
+                } else {
+                  setDialogState(() => errorMessage = 'Invalid OTP');
+                  _showErrorSnackBar(errorMessage);
+                }
+              } catch (e) {
+                print("Verify OTP error: $e");
+                _showErrorSnackBar("Verify OTP error: $e");
               }
+              setDialogState(() => _isVerifying = false);
             }
 
             return PopScope(
@@ -152,7 +205,7 @@ class _AuthMobileState extends State<AuthMobile> {
                       const SizedBox(height: 8),
 
                       Text(
-                        'A 4-digit code has been sent to your number.',
+                        'Hello $_fetchedUserName, A 4-digit code has been sent to your number.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.grey.shade700,
@@ -242,37 +295,37 @@ class _AuthMobileState extends State<AuthMobile> {
                           ),
                         ],
                       ),
-                          const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                          ElevatedButton(
-                            onPressed: _verifyOtp,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.teal.shade700,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size.fromHeight(50),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 8,
-                              shadowColor: Colors.teal.withOpacity(0.5),
-                            ),
-                            child: _isVerifying
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 3,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Confirm',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
+                      ElevatedButton(
+                        onPressed: _verifyOtp,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade700,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 8,
+                          shadowColor: Colors.teal.withOpacity(0.5),
+                        ),
+                        child: _isVerifying
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                            : const Text(
+                                'Confirm',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ),
                     ],
                   ),
                 ),
@@ -282,24 +335,6 @@ class _AuthMobileState extends State<AuthMobile> {
         );
       },
     );
-  }
-
-  void _sendOtp() {
-    final String mobileNumber = _mobileController.text;
-    print("OTP Sent to $mobileNumber");
-    showOtpDialog();
-
-    if (mobileNumber == null ||
-        mobileNumber.isEmpty ||
-        mobileNumber.length != 10) {
-      _showErrorSnackBar('Please enter a valid 10-digit mobile number');
-    } else {
-      showOtpDialog();
-      // Navigator.pushReplacement(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => HomePage(title: "Auth")),
-      // );
-    }
   }
 
   @override
@@ -397,9 +432,7 @@ class _AuthMobileState extends State<AuthMobile> {
                       fillColor: Colors.white,
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade300,
-                        ),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -413,7 +446,7 @@ class _AuthMobileState extends State<AuthMobile> {
                   const SizedBox(height: 20),
 
                   ElevatedButton(
-                    onPressed: _sendOtp,
+                    onPressed: _verifyNumberAndSendOtp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal.shade700,
                       foregroundColor: Colors.white,
@@ -424,19 +457,55 @@ class _AuthMobileState extends State<AuthMobile> {
                       elevation: 5,
                       shadowColor: Colors.teal.shade200,
                     ),
-                    child: const Text(
-                      'Send OTP',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                            padding: EdgeInsets.only(left: 14),
+                            constraints: BoxConstraints(
+                              minHeight: 16,
+                              minWidth: 16,
+                            ),
+                          )
+                        : const Text(
+                            'Send OTP',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
