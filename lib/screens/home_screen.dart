@@ -172,58 +172,61 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
 
-              SizedBox(height: 32),
+              SizedBox(height: 24),
               Container(
                 width: 200,
-                height: 200,
+                height: 60,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    center: Alignment.topLeft,
-                    radius: 2,
-                    colors: [Colors.grey.shade300, Colors.white70],
-                  ),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFD6D6D6),
-                      offset: const Offset(0, 4),
-                      blurRadius: 25,
-                      spreadRadius: 1,
+                      color: _isCheckInEnabled ? Colors.teal.withOpacity(0.3) : Colors.black.withOpacity(0.1),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: ElevatedButton(
                   onPressed: _isCheckInEnabled
                       ? () {
-                          setState(() {
-                            _statusMessage = "Checked in for today!";
-                            _isCheckInEnabled = false;
-                          });
-                        }
+                    setState(() {
+                      _statusMessage = "Checked in for today!";
+                      _isCheckInEnabled = false;
+                    });
+                  }
                       : null,
-                  child: Column(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal.shade600,
+                    disabledBackgroundColor: Colors.grey.shade400,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.touch_app_outlined,
-                        color: Colors.teal.shade800,
-                        size: 48,
+                        color: Colors.white.withOpacity(0.9),
+                        size: 26,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(width: 6),
 
                       Text(
                         "Check In",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black54,
+                          color: Colors.white.withOpacity(0.9),
                         ),
                       ),
+                      const SizedBox(width: 6),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: 32),
+              SizedBox(height: 24),
 
               Text(
                 "Locations assigned to you:",

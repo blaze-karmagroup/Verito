@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
-      home: const AuthMobile(),
+      home: const HomePage(),
       debugShowCheckedModeBanner: false,
     );
   }
