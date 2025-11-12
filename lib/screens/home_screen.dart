@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:verito/models/geofence.dart';
+import 'package:verito/screens/mobile_auth.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,14 +18,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Position? _currentPosition;
+  String _authStatusMessage = '';
   List<Geofence> geoFences = [];
   String _statusMessage = 'Checking Location...';
-  bool _isCheckInEnabled = true;
+  bool _isCheckInEnabled = false;
+  Map<String, dynamic>? _currentEmployee;
+  bool _isLoading = false;
   Geofence? _currentGeofence;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
+    _fetchUserFromApi();
     _initLocationFlow();
   }
 
@@ -71,11 +77,11 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Hello User!",
-                          style: const TextStyle(
+                          "Hello ${_currentEmployee?['Employee_Name'] ?? 'User'}!",
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
-                            color: Color(0xE8000000),
+                            color: Colors.black.withOpacity(0.8),
                           ),
                         ),
                         SizedBox(height: 1),
@@ -85,17 +91,23 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    IconButton(
-                      onPressed: () {
-                        _initLocationFlow();
-                        setState(() {
-                          _statusMessage = "Enabled button...";
-                          _isCheckInEnabled = true;
-                        });
-                      },
-                      icon: const Icon(Icons.refresh),
-                      color: Colors.black.withOpacity(0.7),
-                      tooltip: 'Refresh',
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: _initLocationFlow,
+                          icon: const Icon(Icons.refresh),
+                          color: Colors.black.withOpacity(0.7),
+                          tooltip: 'Refresh',
+                        ),
+                        SizedBox(width: 4),
+                        IconButton(
+                          onPressed: _logOut,
+                          icon: Icon(Icons.logout),
+                          color: Colors.black.withOpacity(0.7),
+                          tooltip: 'Logout',
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -119,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Text(
-                "You're at: \$Location",
+                "📍${_currentGeofence?.name ?? 'Unregistered Location'}",
                 style: TextStyle(
                   fontSize: 16,
                   letterSpacing: 1,
@@ -180,21 +192,16 @@ class _HomePageState extends State<HomePage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: _isCheckInEnabled ? Colors.teal.withOpacity(0.3) : Colors.black.withOpacity(0.1),
+                      color: _isCheckInEnabled
+                          ? Colors.teal.withOpacity(0.3)
+                          : Colors.black.withOpacity(0.1),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: ElevatedButton(
-                  onPressed: _isCheckInEnabled
-                      ? () {
-                    setState(() {
-                      _statusMessage = "Checked in for today!";
-                      _isCheckInEnabled = false;
-                    });
-                  }
-                      : null,
+                  onPressed: _isCheckInEnabled ? _checkIn : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal.shade600,
                     disabledBackgroundColor: Colors.grey.shade400,
@@ -226,7 +233,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 20),
 
               Text(
                 "Locations assigned to you:",
@@ -325,8 +332,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _logOut() {
+    FirebaseAuth.instance.signOut();
+    print('Logged out manually.');
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Logged out successfully.")));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => AuthMobile()),
+    );
+  }
+
   void _checkUserGeofences(Position userPosition, List<Geofence> geofences) {
-    if(geofences.isEmpty){
+    if (geofences.isEmpty) {
       setState(() {
         _statusMessage = "No geofences assigned to you.";
       });
@@ -338,13 +357,16 @@ class _HomePageState extends State<HomePage> {
     for (var fence in geofences) {
       if (isInsideGeofence(userPosition, fence)) {
         foundFence = fence;
+        setState(() => _isCheckInEnabled = true);
         break;
+      } else {
+        setState(() => _isCheckInEnabled = false);
       }
     }
 
     setState(() {
       _currentGeofence = foundFence;
-      if(foundFence != null){
+      if (foundFence != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -352,7 +374,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         );
-        _statusMessage =        "You're in ${foundFence.name}";
+        _statusMessage = "You're in ${foundFence.name}";
       } else {
         _statusMessage = "You are not in any location assigned to you.";
         _currentGeofence = null;
@@ -361,6 +383,71 @@ class _HomePageState extends State<HomePage> {
         ).showSnackBar(SnackBar(content: Text("You're not in any GeoFence")));
       }
     });
+  }
+
+  Future<void> _fetchUserFromApi() async {
+    setState(() => _isLoading = true);
+    final userToken = FirebaseAuth.instance.currentUser;
+    print('Fetched User Token: $userToken');
+
+    if (userToken == null || userToken.uid.isEmpty) {
+      print("User not logged in or phone number is missing from token.");
+      if (mounted) {
+        setState(() {
+          _authStatusMessage = "Could not verify user.";
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    String rawUid = userToken.uid;
+    String? userPhoneNumber;
+
+    print('Logged in user phone: $userPhoneNumber');
+
+    if (rawUid.startsWith("phone_")) {
+      userPhoneNumber = rawUid.substring(6);
+    } else {
+      print("UID does not have the 'phone_' prefix. Using raw UID.");
+      userPhoneNumber = rawUid;
+    }
+
+    print("Attempting to fetch $userPhoneNumber from API...");
+
+    final url = Uri.parse(
+      'http://192.168.10.128:8080/employee?mobile=+$userPhoneNumber',
+    );
+    print('Calling Api from: $url');
+
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
+
+      print("Response Status Code: ${response.statusCode}");
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> employee = jsonDecode(response.body);
+        print("Fetched employee: $employee");
+        setState(() {
+          _currentEmployee = employee;
+          _isLoading = false;
+        });
+      } else {
+        print("Error: ${response.statusCode}");
+        if (mounted) {
+          setState(() {
+            _authStatusMessage = "Server Error: ${response.statusCode}";
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print("_fetchUserFromApi Error: $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _initLocationFlow() async {
@@ -375,7 +462,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    try{
+    try {
       LocationSettings settings = const LocationSettings(
         accuracy: LocationAccuracy.high,
       );
@@ -392,7 +479,7 @@ class _HomePageState extends State<HomePage> {
 
       final List<Geofence>? fetchedGeofences = await _fetchAssignedGeofences();
 
-      if(fetchedGeofences != null){
+      if (fetchedGeofences != null) {
         _checkUserGeofences(position, fetchedGeofences);
       } else {
         setState(() {
@@ -412,6 +499,100 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _checkIn() async {
+    if (_currentEmployee == null) {
+      print("User not logged in or token not found.");
+      if (mounted) {
+        setState(() {
+          _authStatusMessage = "_checkIn error: Could not verify user.";
+        });
+      }
+      return;
+    }
+
+    if (_currentGeofence == null) {
+      print("Cannot record attendance: Not inside any geofence.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Attendance can only be marked inside a designated area.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_currentPosition == null) {
+      print("Cannot record attendance: Current location is unknown.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Could not determine your current location."),
+        ),
+      );
+      return;
+    }
+
+    print("Attempting to insert user attendance through API...");
+
+    final Map<String, dynamic> attendanceData = {
+      'Employee_ID': _currentEmployee!['Employee_ID'],
+      'Employee_Name': _currentEmployee!['Employee_Name'],
+      'Date_Time': DateTime.now().toIso8601String(),
+      'Mobile_no': _currentEmployee!['Mobile_no'],
+      'Geofence_Name': _currentGeofence!.name,
+      'Coordinates': {
+        'lat': _currentPosition!.latitude,
+        'lon': _currentPosition!.longitude,
+      },
+    };
+
+    print('Attendance Data: $attendanceData');
+
+    try {
+      final url = Uri.parse('http://192.168.10.128:8080/record-attendance');
+      print('Calling Api from: $url');
+
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(attendanceData),
+          )
+          .timeout(const Duration(seconds: 5));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Attendance recorded successfully");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Attendance with location recorded successfully"),
+          ),
+        );
+        setState(() => _isCheckInEnabled = false);
+
+        Future.delayed(const Duration(seconds: 20), () {
+          print('Enabling mark attendance button after 20 seconds...');
+          if (mounted) {
+            setState(() => _isCheckInEnabled = true);
+          }
+        });
+      } else {
+        print('Failed to record attendance: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to record attendance")),
+        );
+      }
+    } catch (e) {
+      print("_recordAttendance Error: $e");
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error in _recordAttendance: $e")));
+    }
+  }
+
   Future<List<Geofence>?> _fetchAssignedGeofences() async {
     try {
       final url = Uri.parse('http://192.168.10.128:8080/geofences');
@@ -419,7 +600,7 @@ class _HomePageState extends State<HomePage> {
 
       final response = await http.get(url).timeout(Duration(seconds: 10));
 
-      if(response.statusCode == 200){
+      if (response.statusCode == 200) {
         final List<dynamic> geofenceData = jsonDecode(response.body);
 
         final List<Geofence> fetchedGeofences = geofenceData
@@ -433,7 +614,7 @@ class _HomePageState extends State<HomePage> {
         print("Fetched geofences: $fetchedGeofences");
         return fetchedGeofences;
       }
-    } catch (e){
+    } catch (e) {
       print("_fetchAssignedGeofences Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Error fetching geofences.")),
