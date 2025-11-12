@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "413566764879",
+    "project_id": "verito-70de0",
+    "storage_bucket": "verito-70de0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413566764879:android:6e79bb979941fed6cca73a",
+        "android_client_info": {
+          "package_name": "com.example.verito"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNp_wQyOGPJjc-O5KHDG5B9a7pM3LInc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
