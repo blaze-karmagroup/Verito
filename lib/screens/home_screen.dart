@@ -29,8 +29,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _fetchUserFromApi();
     _initLocationFlow();
+    _fetchUserFromApi();
   }
 
   bool isInsideGeofence(Position userPosition, Geofence geofence) {
@@ -370,7 +370,7 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "You're in ${foundFence.name} \n Lat: ${foundFence.latitude} \n Lon: ${foundFence.longitude}",
+              "You're in ${foundFence.name} \n Lat: ${foundFence.latitude}, Lon: ${foundFence.longitude}",
             ),
           ),
         );
@@ -396,6 +396,7 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _authStatusMessage = "Could not verify user.";
           _isLoading = false;
+          _isCheckInEnabled = false;
         });
       }
       return;
@@ -501,7 +502,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _checkIn() async {
     if (_currentEmployee == null) {
-      print("User not logged in or token not found.");
+      _showErrorSnackBar("User not logged in or token not found.");
       if (mounted) {
         setState(() {
           _authStatusMessage = "_checkIn error: Could not verify user.";
@@ -699,5 +700,31 @@ class _HomePageState extends State<HomePage> {
       return false;
     }
     return true;
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 }
