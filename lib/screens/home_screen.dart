@@ -728,3 +728,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+class UserRepository{
+  // final FirebaseAuth _firebaseAuth;
+  // final http.Client _httpClient;
+}
