@@ -22,4 +22,6 @@ class Geofence{
       radius: int.tryParse(json['Radius']?.toString() ?? '0.0') ?? 0,
     );
   }
+
+
 }

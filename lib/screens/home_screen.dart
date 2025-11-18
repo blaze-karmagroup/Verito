@@ -595,8 +595,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Geofence>?> _fetchAssignedGeofences() async {
+
+    if(_currentEmployee == null){
+      _showErrorSnackBar("User not logged in or token not found.");
+      return null;
+    }
+    print('_currentEmployee not null');
+
+    final _empId = _currentEmployee!['Employee_ID'];
+    if(_empId == null){
+      _showErrorSnackBar("Couldn't get Employee ID");
+      return null;
+    }
+    print('_empId not null');
+
     try {
-      final url = Uri.parse('http://192.168.10.128:8080/geofences');
+      final url = Uri.parse('http://192.168.10.128:8080/assigned-geofences?empId=$_empId');
       print('Calling Api from: $url');
 
       final response = await http.get(url).timeout(Duration(seconds: 10));
