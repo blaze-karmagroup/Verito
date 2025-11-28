@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   bool _isCheckInEnabled = false;
   Map<String, dynamic>? _currentEmployee;
   bool _isLoading = false;
+  bool _loggingOut = false;
   Geofence? _currentGeofence;
 
   @override
@@ -67,7 +68,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              SizedBox(height: 72),
+              SizedBox(height: 54),
               Container(
                 margin: EdgeInsets.only(left: 16, right: 6),
                 child: Row(
@@ -101,12 +102,21 @@ class _HomePageState extends State<HomePage> {
                           tooltip: 'Refresh',
                         ),
                         SizedBox(width: 4),
-                        IconButton(
-                          onPressed: _logOut,
-                          icon: Icon(Icons.logout),
-                          color: Colors.black.withOpacity(0.7),
-                          tooltip: 'Logout',
-                        ),
+                        _loggingOut
+                            ? const CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                          constraints: BoxConstraints(
+                            minHeight: 18,
+                            minWidth: 18,
+                          ),
+                        )
+                            : IconButton(
+                                onPressed: _logOut,
+                                icon: Icon(Icons.logout),
+                                color: Colors.black.withOpacity(0.7),
+                                tooltip: 'Logout',
+                              ),
                       ],
                     ),
                   ],
@@ -139,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.black.withOpacity(0.6),
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 20),
 
               Container(
                 width: double.infinity,
@@ -332,16 +342,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _logOut() {
-    FirebaseAuth.instance.signOut();
-    print('Logged out manually.');
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Logged out successfully.")));
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => AuthMobile()),
-    );
+  Future<void> _logOut() async {
+    setState(() => _loggingOut = true);
+
+    try {
+      await FirebaseAuth.instance.signOut();
+      await Future.delayed(const Duration(seconds: 3));
+      print('Logged out manually.');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Logged out.")));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => AuthMobile()),
+      );
+    } catch (e) {
+      print('Error logging out: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Couldn't log out.")));
+    }
   }
 
   void _checkUserGeofences(Position userPosition, List<Geofence> geofences) {
@@ -417,12 +437,12 @@ class _HomePageState extends State<HomePage> {
     print("Attempting to fetch $userPhoneNumber from API...");
 
     final url = Uri.parse(
-      'http://192.168.10.128:8080/employee?mobile=+$userPhoneNumber',
+      'http://123.252.131.18:64/employee?mobile=+$userPhoneNumber',
     );
     print('Calling Api from: $url');
 
     try {
-      final response = await http.get(url).timeout(const Duration(seconds: 5));
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (!mounted) return;
 
@@ -550,7 +570,7 @@ class _HomePageState extends State<HomePage> {
     print('Attendance Data: $attendanceData');
 
     try {
-      final url = Uri.parse('http://192.168.10.128:8080/record-attendance');
+      final url = Uri.parse('http://123.252.131.18:64/record-attendance');
       print('Calling Api from: $url');
 
       final response = await http
@@ -559,7 +579,7 @@ class _HomePageState extends State<HomePage> {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(attendanceData),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
 
       if (!mounted) return;
 
@@ -595,8 +615,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Geofence>?> _fetchAssignedGeofences() async {
+    if (_currentEmployee == null) {
+      _showErrorSnackBar("User not logged in or token not found.");
+      return null;
+    }
+    print('_currentEmployee not null');
+
+    final _empId = _currentEmployee!['Employee_ID'];
+    if (_empId == null) {
+      _showErrorSnackBar("Couldn't get Employee ID");
+      return null;
+    }
+    print('_empId not null');
+
     try {
-      final url = Uri.parse('http://192.168.10.128:8080/geofences');
+      final url = Uri.parse(
+        'http://123.252.131.18:64/assigned-geofences?empId=$_empId',
+      );
       print('Calling Api from: $url');
 
       final response = await http.get(url).timeout(Duration(seconds: 10));
@@ -606,6 +641,8 @@ class _HomePageState extends State<HomePage> {
 
         final List<Geofence> fetchedGeofences = geofenceData
             .map((item) => Geofence.fromJson(item))
+            .toList()
+            .reversed
             .toList();
 
         setState(() {
@@ -640,7 +677,7 @@ class _HomePageState extends State<HomePage> {
                 Navigator.pop(context);
                 await Geolocator.openLocationSettings();
               },
-              child: const Text('Cancel'),
+              child: const Text('Go to Settings'),
             ),
           ],
         ),
@@ -729,7 +766,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class UserRepository{
+class UserRepository {
   // final FirebaseAuth _firebaseAuth;
   // final http.Client _httpClient;
 }
