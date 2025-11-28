@@ -15,13 +15,26 @@ class AuthMobile extends StatefulWidget {
 
 class _AuthMobileState extends State<AuthMobile> {
   final TextEditingController _mobileController = TextEditingController();
-  Map<String, dynamic> _fetchedUser = {};
   String _fetchedUserName = '';
   bool _isLoading = false;
+  final userToken = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (userToken != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
+    });
+  }
 
   void _verifyNumberAndSendOtp() async {
     final String mobileNumber = _mobileController.text;
-    print("OTP Sent to $mobileNumber");
+    print("Checking $mobileNumber");
 
     if (mobileNumber.isEmpty || mobileNumber.length != 10) {
       _showErrorSnackBar('Please enter a valid 10-digit mobile number');
@@ -40,7 +53,7 @@ class _AuthMobileState extends State<AuthMobile> {
 
       final response = await http
           .get(fetchUserUrl)
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
 
       if (!mounted) return;
 
@@ -48,7 +61,6 @@ class _AuthMobileState extends State<AuthMobile> {
         Map<String, dynamic> employee = jsonDecode(response.body);
         print("Fetched employee: $employee");
         setState(() {
-          _fetchedUser = employee;
           _fetchedUserName = employee['Employee_Name'].toString();
         });
 
@@ -359,8 +371,8 @@ class _AuthMobileState extends State<AuthMobile> {
               padding: const EdgeInsets.only(
                 left: 24.0,
                 right: 24.0,
-                top: 40.0,
-                bottom: 72.0,
+                top: 32.0,
+                bottom: 30.0,
               ),
               decoration: BoxDecoration(
                 color: Color(0xFFF8F0E3),
@@ -371,6 +383,7 @@ class _AuthMobileState extends State<AuthMobile> {
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   SizedBox(
@@ -380,7 +393,7 @@ class _AuthMobileState extends State<AuthMobile> {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 24.0),
+                  const SizedBox(height: 20.0),
 
                   const Text(
                     'Welcome to Verito',
