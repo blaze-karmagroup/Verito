@@ -4,7 +4,7 @@
     <application
         android:label="verito"
         android:name="${applicationName}"
-        android:icon="@mipmap/verito_logo">
+        android:icon="@mipmap/verito_logo2">
         <activity
             android:name=".MainActivity"
             android:exported="true"

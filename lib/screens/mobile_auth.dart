@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -357,141 +358,150 @@ class _AuthMobileState extends State<AuthMobile> {
         width: double.infinity,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.teal.shade300, Color(0xFFF8F0E3)],
-            stops: [0.4, 1.0],
+          image: DecorationImage(
+            image: AssetImage('assets/images/login_bg.jpg'),
+            // alignment: Alignment.center,
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.teal.shade600,
+              BlendMode.darken,
+            ),
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              padding: const EdgeInsets.only(
-                left: 24.0,
-                right: 24.0,
-                top: 32.0,
-                bottom: 30.0,
-              ),
-              decoration: BoxDecoration(
-                color: Color(0xFFF8F0E3),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.only(
+                  left: 24.0,
+                  right: 24.0,
+                  top: 32.0,
+                  bottom: 36.0,
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(
-                    height: 60,
-                    child: Image.asset(
-                      'assets/images/karma_logo.png',
-                      fit: BoxFit.contain,
-                    ),
+                decoration: BoxDecoration(
+                  color: Color(0xFFF8F0E3),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
                   ),
-                  const SizedBox(height: 20.0),
-
-                  const Text(
-                    'Welcome to Verito',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF035C5C),
-                    ),
-                  ),
-                  const SizedBox(height: 2.0),
-
-                  Text(
-                    'Enter your mobile number to continue',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 32),
-
-                  TextFormField(
-                    controller: _mobileController,
-                    keyboardType: TextInputType.phone,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.0,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    // decoration: InputDecoration(
-                    //   hintText: 'e.g. 9876543210',
-                    //   hintStyle: TextStyle(color: Colors.grey.shade500),
-                    //   filled: true,
-                    //   fillColor: Colors.white,
-                    //   border: OutlineInputBorder(
-                    //     borderRadius: BorderRadius.circular(12),
-                    //     borderSide: BorderSide.none,
-                    //   ),
-                    //   contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                    // ),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      hintText: 'e.g. 9876543210',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(
+                      height: 60,
+                      child: Image.asset(
+                        'assets/images/karma_logo.png',
+                        fit: BoxFit.contain,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: Colors.teal.shade700,
-                          width: 2,
+                    ),
+                    const SizedBox(height: 20.0),
+
+                    const Text(
+                      'Welcome to Verito',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF035C5C),
+                      ),
+                    ),
+                    const SizedBox(height: 2.0),
+
+                    Text(
+                      'Enter your mobile number to continue',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    TextFormField(
+                      controller: _mobileController,
+                      keyboardType: TextInputType.phone,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.0,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      // decoration: InputDecoration(
+                      //   hintText: 'e.g. 9876543210',
+                      //   hintStyle: TextStyle(color: Colors.grey.shade500),
+                      //   filled: true,
+                      //   fillColor: Colors.white,
+                      //   border: OutlineInputBorder(
+                      //     borderRadius: BorderRadius.circular(12),
+                      //     borderSide: BorderSide.none,
+                      //   ),
+                      //   contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                      // ),
+                      decoration: InputDecoration(
+                        counterText: '',
+                        hintText: 'e.g. 9876543210',
+                        hintStyle: TextStyle(color: Colors.grey.shade500),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: Colors.teal.shade700,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  ElevatedButton(
-                    onPressed: _verifyNumberAndSendOtp,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade700,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    ElevatedButton(
+                      onPressed: _verifyNumberAndSendOtp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 5,
+                        shadowColor: Colors.teal.shade200,
                       ),
-                      elevation: 5,
-                      shadowColor: Colors.teal.shade200,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                              padding: EdgeInsets.only(left: 14),
+                              constraints: BoxConstraints(
+                                minHeight: 16,
+                                minWidth: 16,
+                              ),
+                            )
+                          : const Text(
+                              'Send OTP',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                            padding: EdgeInsets.only(left: 14),
-                            constraints: BoxConstraints(
-                              minHeight: 16,
-                              minWidth: 16,
-                            ),
-                          )
-                        : const Text(
-                            'Send OTP',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
