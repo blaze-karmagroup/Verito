@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -19,6 +20,9 @@ class _AuthMobileState extends State<AuthMobile> {
   String _fetchedUserName = '';
   bool _isLoading = false;
   final userToken = FirebaseAuth.instance.currentUser;
+  Timer? _timer;
+  int _timeRemaining = 60;
+  bool resendAvailable = false;
 
   @override
   void initState() {
@@ -98,10 +102,12 @@ class _AuthMobileState extends State<AuthMobile> {
   }
 
   void _showOtpDialog({required String phoneNumber}) {
+    final String mobileNumber = _mobileController.text;
     final focusNodes = List.generate(4, (_) => FocusNode());
     final controllers = List.generate(4, (_) => TextEditingController());
     String errorMessage = '';
     bool _isVerifying = false;
+    bool isTimerStarted = true;
 
     void disposeControllers() {
       for (var controller in controllers) {
@@ -118,8 +124,6 @@ class _AuthMobileState extends State<AuthMobile> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            bool isDialogLoading = false;
-
             void _onOtpChanged(String value, int index) {
               setDialogState(() {
                 errorMessage = '';
@@ -129,6 +133,70 @@ class _AuthMobileState extends State<AuthMobile> {
               }
               if (value.isEmpty && index > 0) {
                 FocusScope.of(context).requestFocus(focusNodes[index - 1]);
+              }
+            }
+
+            void _startDialogTimer() {
+              _timer?.cancel();
+
+              setDialogState(() {
+                resendAvailable = false;
+                _timeRemaining = 60;
+              });
+
+              _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+                if (!mounted) {
+                  timer.cancel();
+                  return;
+                }
+
+                if (_timeRemaining == 0) {
+                  setDialogState(() {
+                    resendAvailable = true;
+                    timer.cancel();
+                  });
+                } else {
+                  setDialogState(() {
+                    _timeRemaining--;
+                  });
+                }
+              });
+            }
+
+            if(isTimerStarted){
+              _startDialogTimer();
+              isTimerStarted = false;
+            }
+
+            // WidgetsBinding.instance.addPostFrameCallback((_) {
+            //   if (_timer == null || !_timer!.isActive) {
+            //     _startDialogTimer();
+            //   }
+            // });
+
+            Future<void> _resendOtp() async {
+              _startDialogTimer();
+              try {
+                final vasudevResponse = await http.post(
+                  Uri.parse('http://192.168.10.128:8080/send-otp'),
+                  headers: {'Content-Type': 'application/json'},
+                  body: jsonEncode({'phoneNumber': mobileNumber}),
+                );
+
+                if (!mounted) return;
+
+                if (vasudevResponse.statusCode == 200) {
+                  _showSuccessSnackBar('OTP sent.');
+                } else {
+                  _showErrorSnackBar('Error sending OTP.');
+                  _timer?.cancel();
+                  setDialogState(() => resendAvailable = true);
+                }
+              } catch (e) {
+                print('_resendOtp error: $e');
+                _showErrorSnackBar('Error re-sending OTP.');
+                _timer?.cancel();
+                setDialogState(() => resendAvailable = true);
               }
             }
 
@@ -171,6 +239,8 @@ class _AuthMobileState extends State<AuthMobile> {
                   );
 
                   setDialogState(() => _isVerifying = false);
+                  _timer?.cancel();
+                  disposeControllers();
 
                   Navigator.pushReplacement(
                     context,
@@ -294,18 +364,22 @@ class _AuthMobileState extends State<AuthMobile> {
                               minimumSize: Size(0, 0),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            onPressed: () {
-                              // TODO: Add resend logic
-                              print("Resend OTP tapped");
-                            },
+                            onPressed: resendAvailable ? _resendOtp : null,
                             child: Text(
                               "Resend OTP",
                               style: TextStyle(
-                                color: Colors.teal.shade700,
+                                color: resendAvailable
+                                    ? Colors.teal.shade700
+                                    : Colors.grey.shade700,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
+                          if (!resendAvailable)
+                            Text(
+                              " (${_timeRemaining}s)",
+                              style: TextStyle(color: Colors.grey.shade700),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 16),
