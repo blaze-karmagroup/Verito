@@ -22,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   List<Geofence> geoFences = [];
   String _statusMessage = 'Checking Location...';
   bool _isCheckInEnabled = false;
+  bool _isCheckOutEnabled = false;
   Map<String, dynamic>? _currentEmployee;
   bool _isLoading = false;
   bool _loggingOut = false;
@@ -196,53 +197,107 @@ class _HomePageState extends State<HomePage> {
               ),
 
               SizedBox(height: 24),
-              Container(
-                width: 200,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _isCheckInEnabled
-                          ? Colors.teal.withOpacity(0.3)
-                          : Colors.black.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: _isCheckInEnabled ? _checkIn : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal.shade600,
-                    disabledBackgroundColor: Colors.grey.shade400,
-                    shape: RoundedRectangleBorder(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 180,
+                    height: 60,
+                    decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.touch_app_outlined,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 26,
-                      ),
-                      const SizedBox(width: 6),
-
-                      Text(
-                        "Check In",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white.withOpacity(0.9),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _isCheckInEnabled
+                              ? Colors.teal.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _isCheckInEnabled ? _checkIn : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade600,
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
                       ),
-                      const SizedBox(width: 6),
-                    ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.touch_app_outlined,
+                            color: Colors.white.withOpacity(0.9),
+                            size: 26,
+                          ),
+                          const SizedBox(width: 6),
+
+                          Text(
+                            "Check In",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                  SizedBox(width: 12),
+                  Container(
+                    width: 140,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _isCheckOutEnabled
+                              ? Colors.red.shade400.withOpacity(0.3)
+                              : Colors.black.withOpacity(0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _isCheckOutEnabled ? _checkOut : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade400,
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.touch_app_outlined,
+                            color: Colors.white.withOpacity(0.9),
+                            size: 26,
+                          ),
+                          const SizedBox(width: 6),
+
+                          Text(
+                            "Out",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                      ),
+                    ),
+                  ),
+                ]
               ),
               SizedBox(height: 20),
 
@@ -439,7 +494,7 @@ class _HomePageState extends State<HomePage> {
     print("Attempting to fetch $userPhoneNumber from API...");
 
     final url = Uri.parse(
-      'http://192.168.10.128:8080/employee?mobile=+$userPhoneNumber',
+      'http://192.168.10.128:64/employee?mobile=+$userPhoneNumber',
     );
     print('Calling Api from: $url');
 
@@ -534,11 +589,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (_currentGeofence == null) {
-      print("Cannot record attendance: Not inside any geofence.");
+      print("Cannot check-in: Not inside any geofence.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            "Attendance can only be marked inside a designated area.",
+            "You can only check-in while inside a designated area.",
           ),
         ),
       );
@@ -546,7 +601,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (_currentPosition == null) {
-      print("Cannot record attendance: Current location is unknown.");
+      print("Cannot check-in: Current location is unknown.");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Could not determine your current location."),
@@ -572,7 +627,7 @@ class _HomePageState extends State<HomePage> {
     print('Attendance Data: $attendanceData');
 
     try {
-      final url = Uri.parse('http://192.168.10.128:8080/record-attendance');
+      final url = Uri.parse('http://192.168.10.128:64/check-in');
       print('Calling Api from: $url');
 
       final response = await http
@@ -586,33 +641,134 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("Attendance recorded successfully");
+        print("Checked In successfully");
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Attendance with location recorded successfully"),
+          SnackBar(
+            content: Text(
+              "Successfully checked in at ${_currentGeofence!.name}.",
+            ),
           ),
         );
-        setState(() => _isCheckInEnabled = false);
+        setState(() {
+          _isCheckInEnabled = false;
+          _isCheckOutEnabled = true;
+        });
 
         Future.delayed(const Duration(seconds: 20), () {
-          print('Enabling mark attendance button after 20 seconds...');
+          print('Enabling check-in button after 20 seconds...');
           if (mounted) {
             setState(() => _isCheckInEnabled = true);
           }
         });
       } else {
-        print('Failed to record attendance: ${response.statusCode}');
+        print('Failed to check-in: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to record attendance")),
+          const SnackBar(content: Text("Failed to check in")),
         );
       }
     } catch (e) {
-      print("_recordAttendance Error: $e");
+      print("_checkIn Error: $e");
       if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error in _recordAttendance: $e")));
+      ).showSnackBar(SnackBar(content: Text("Error in _checkIn: $e")));
+    }
+  }
+
+  Future<void> _checkOut() async {
+    if (_currentEmployee == null) {
+      _showErrorSnackBar("User not logged in or token not found.");
+      if (mounted) {
+        setState(() {
+          _authStatusMessage = "_checkIn error: Could not verify user.";
+        });
+      }
+      return;
+    }
+
+    if (_currentGeofence == null) {
+      print("Cannot check-out: Not inside any geofence.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "You can checkout only while inside a designated area.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_currentPosition == null) {
+      print("Cannot check-out: Current location is unknown.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Could not determine your current location."),
+        ),
+      );
+      return;
+    }
+
+    print("Attempting to insert user attendance through API...");
+
+    final Map<String, dynamic> attendanceData = {
+      'Employee_ID': _currentEmployee!['Employee_ID'],
+      'Employee_Name': _currentEmployee!['Employee_Name'],
+      'Date_Time': DateTime.now().toIso8601String(),
+      'Mobile_no': _currentEmployee!['Mobile_no'],
+      'Geofence_Name': _currentGeofence!.name,
+      'Coordinates': {
+        'lat': _currentPosition!.latitude,
+        'lon': _currentPosition!.longitude,
+      },
+    };
+
+    print('Attendance Data: $attendanceData');
+
+    try {
+      final url = Uri.parse('http://192.168.10.128:64/check-out');
+      print('Calling Api from: $url');
+
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(attendanceData),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print("Checked out successfully");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Successfully checked out at ${_currentGeofence!.name}.",
+            ),
+          ),
+        );
+        setState(() => _isCheckOutEnabled = false);
+        _initLocationFlow();
+        // Future.delayed(const Duration(seconds: 20), () {
+        //   print('Enabling mark attendance button after 20 seconds...');
+        //   if (mounted) {
+        //     setState(() => _isCheckOutEnabled = true);
+        //   }
+        // });
+      } else {
+        print('Failed to checkout: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to check out")),
+        );
+      }
+    } catch (e) {
+      print("_checkOut Error: $e");
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error in _checkOut: $e")));
     }
   }
 
@@ -632,7 +788,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final url = Uri.parse(
-        'http://192.168.10.128:8080/assigned-geofences?empId=$_empId',
+        'http://192.168.10.128:64/assigned-geofences?empId=$_empId',
       );
       print('Calling Api from: $url');
 

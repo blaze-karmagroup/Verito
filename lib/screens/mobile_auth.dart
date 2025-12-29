@@ -51,7 +51,7 @@ class _AuthMobileState extends State<AuthMobile> {
 
     try {
       final fetchUserUrl = Uri.parse(
-        'http://192.168.10.128:8080/employee?mobile=+$mobileNumber',
+        'http://192.168.10.128:64/employee?mobile=+$mobileNumber',
       );
 
       print('Calling: $fetchUserUrl');
@@ -70,7 +70,7 @@ class _AuthMobileState extends State<AuthMobile> {
         });
 
         final vasudevResponse = await http.post(
-          Uri.parse('http://192.168.10.128:8080/send-otp'),
+          Uri.parse('http://192.168.10.128:64/send-otp'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'phoneNumber': mobileNumber}),
         );
@@ -178,7 +178,7 @@ class _AuthMobileState extends State<AuthMobile> {
               _startDialogTimer();
               try {
                 final vasudevResponse = await http.post(
-                  Uri.parse('http://192.168.10.128:8080/send-otp'),
+                  Uri.parse('http://192.168.10.128:64/send-otp'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode({'phoneNumber': mobileNumber}),
                 );
@@ -219,7 +219,7 @@ class _AuthMobileState extends State<AuthMobile> {
 
               try {
                 final vasudevResponse = await http.post(
-                  Uri.parse('http://192.168.10.128:8080/verify-otp'),
+                  Uri.parse('http://192.168.10.128:64/verify-otp'),
                   headers: {'Content-Type': 'application/json'},
                   body: jsonEncode({'phoneNumber': phoneNumber, 'otp': otp}),
                 );
@@ -240,7 +240,7 @@ class _AuthMobileState extends State<AuthMobile> {
 
                   setDialogState(() => _isVerifying = false);
                   _timer?.cancel();
-                  disposeControllers();
+                  // disposeControllers();
 
                   Navigator.pushReplacement(
                     context,
