@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:verito/data/local_db.dart';
 import 'package:verito/models/geofence.dart';
 import 'package:verito/screens/mobile_auth.dart';
 
@@ -25,6 +26,8 @@ class _HomePageState extends State<HomePage> {
   bool _isCheckOutEnabled = false;
   Map<String, dynamic>? _currentEmployee;
   bool _isLoading = false;
+  bool _isLogLoading = true;
+  List<Map<String, dynamic>> _localLogs = [];
   bool _loggingOut = false;
   Geofence? _currentGeofence;
 
@@ -33,6 +36,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _initLocationFlow();
     _fetchUserFromApi();
+    _fetchLocalLogs();
   }
 
   bool isInsideGeofence(Position userPosition, Geofence geofence) {
@@ -297,7 +301,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                ]
+                ],
               ),
               SizedBox(height: 20),
 
@@ -386,6 +390,24 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.teal.withOpacity(0.2),
                             // indent: 16,
                             // endIndent: 16,
+                          );
+                        },
+                      ),
+                    ),
+
+              SizedBox(height: 20),
+              _isLogLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : _localLogs.isEmpty
+                  ? const Center(child: Text('No logs yet.'))
+                  : SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        itemCount: _localLogs.length,
+                        itemBuilder: (context, index) {
+                          final log = _localLogs[index];
+                          return Text(
+                            "${log['checkMethod']} - ${log['date_time']} - ${log['employee_id']} - ${log['employee_name']} - ${log['location_name']}",
                           );
                         },
                       ),
@@ -577,6 +599,44 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _addToLocalStorage(String checkMethod) async {
+    String timeStamp = DateTime.now().toIso8601String();
+    String userId = _currentEmployee!['Employee_ID'];
+    String userName = _currentEmployee!['Employee_Name'];
+    String locationName = _currentGeofence!.name;
+
+    Map<String, dynamic> logEntry = {
+      'employee_id': userId,
+      'employee_name': userName,
+      'checkMethod': checkMethod,
+      'location_name': locationName,
+      'date_time': timeStamp,
+    };
+
+    try {
+      final localDb = LocalDB.instance;
+      final id = await localDb.insertLog(logEntry);
+      print('Log inserted with ID: $id');
+      _fetchLocalLogs();
+    } catch (e) {
+      print('Error inserting log: $e');
+      _showErrorSnackBar('Error inserting log: $e');
+    }
+  }
+
+  Future<void> _fetchLocalLogs() async {
+    setState(() => _isLogLoading = true);
+    final localDB = LocalDB.instance;
+    final logs = await localDB.getLogs();
+    print('Fetched logs: $logs');
+    if (mounted) {
+      setState(() {
+        _localLogs = logs;
+        _isLogLoading = false;
+      });
+    }
+  }
+
   Future<void> _checkIn() async {
     if (_currentEmployee == null) {
       _showErrorSnackBar("User not logged in or token not found.");
@@ -642,6 +702,7 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Checked In successfully");
+        await _addToLocalStorage("in");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -662,9 +723,9 @@ class _HomePageState extends State<HomePage> {
         });
       } else {
         print('Failed to check-in: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to check in")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Failed to check in")));
       }
     } catch (e) {
       print("_checkIn Error: $e");
@@ -741,6 +802,7 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("Checked out successfully");
+        await _addToLocalStorage("out");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -758,9 +820,9 @@ class _HomePageState extends State<HomePage> {
         // });
       } else {
         print('Failed to checkout: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to check out")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Failed to check out")));
       }
     } catch (e) {
       print("_checkOut Error: $e");
